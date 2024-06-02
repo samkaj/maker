@@ -7,6 +7,7 @@ pub struct Walker {
 }
 
 impl Walker {
+    /// Create a new Walker.
     pub fn new(root: String, ignore_dirs: Vec<String>) -> Walker {
         return Walker { root, ignore_dirs };
     }
@@ -19,18 +20,15 @@ impl Walker {
 
     /// Depth first search where the root is the path.
     fn walk_recursive(&self, path: String) -> Vec<String> {
-        let dir = fs::read_dir(path).expect("FIXME: Error handling: Could not read the directory");
+        let dir = fs::read_dir(path).expect("FIXME: Error handling: Failed to read directory");
         let mut repo: Vec<String> = vec![];
         for file in dir {
             match file {
                 Ok(f) => {
                     let md = f.metadata().unwrap();
                     let path = f.path().to_str().unwrap().to_string();
-                    let ignore = self
-                        .ignore_dirs
-                        .contains(&String::from(f.file_name().to_str().unwrap()));
                     if md.is_dir() {
-                        if !ignore {
+                        if !self.dir_is_ignored(f.file_name().to_str().unwrap().to_string()) {
                             repo.extend(self.walk_recursive(path.clone()));
                         }
                     } else {
@@ -42,5 +40,10 @@ impl Walker {
         }
 
         return repo;
+    }
+
+    /// Determine if a directory name should be ignored.
+    fn dir_is_ignored(&self, dir_name: String) -> bool {
+        return self.ignore_dirs.contains(&dir_name);
     }
 }
