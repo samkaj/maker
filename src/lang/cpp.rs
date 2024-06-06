@@ -27,6 +27,9 @@ mod cpp {
             self.categorize_files();
             self.create_object_files();
             self.create_variables();
+            self.create_all_rule();
+            // Create the obj rules
+            self.create_clean_rule();
         }
 
         fn dump(&self) -> String {
@@ -75,6 +78,20 @@ mod cpp {
             }
         }
 
+        fn create_all_rule(&mut self) {
+            self.makefile.push_str(&format!(
+                r#"all: $(OBJS)
+    $(CC) -g $(OBJS) -o $(OUT) $(FLAGS)"#
+            ))
+        }
+
+        fn create_clean_rule(&mut self) {
+            self.makefile.push_str(&format!(
+                r#"clean:
+    rm -f $(OBJS) $(OUT)"#
+            ))
+        }
+
         /// Construct the Makefile
         fn create_variables(&mut self) {
             let objs = String::from("OBJS    = ") + &self.obj_files.join(" ");
@@ -85,8 +102,9 @@ mod cpp {
                 + "-I"
                 + self.source_files.get(0).unwrap().split_once("/").unwrap().0; // FIXME: what is this line? We should pass the source path and it should be ok
             let cc = String::from("CC      = ") + "cc"; // FIXME: pass the compiler
-            self.makefile = format!(
-                r#"# Object files:
+            self.makefile.push_str(
+                &format!(
+                    r#"# Object files:
 {}
 # Header files:
 {}
@@ -98,12 +116,14 @@ mod cpp {
 {}
 # Compiler:
 {}"#,
-                objs.trim(),
-                headers.trim(),
-                sources.trim(),
-                out.trim(),
-                flags.trim(),
-                cc.trim()
+                    objs.trim(),
+                    headers.trim(),
+                    sources.trim(),
+                    out.trim(),
+                    flags.trim(),
+                    cc.trim()
+                )
+                .to_string(),
             )
         }
     }
@@ -143,6 +163,8 @@ mod cpp {
                     String::from("src/main.cpp"),
                     String::from("include/foo.hpp"),
                     String::from("src/foo.cpp"),
+                    String::from("src/bar/baz.cpp"),
+                    String::from("include/bar/baz.h"),
                 ],
                 output_dir: String::from("target"),
                 header_files: vec![],
@@ -156,7 +178,11 @@ mod cpp {
 
             assert_eq!(
                 cpp.obj_files,
-                vec![String::from("target/main.o"), String::from("target/foo.o")]
+                vec![
+                    String::from("target/main.o"),
+                    String::from("target/foo.o"),
+                    String::from("target/bar/baz.o")
+                ]
             );
         }
     }
