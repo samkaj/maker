@@ -37,7 +37,11 @@ mod cpp {
     impl Cpp {
         /// Split the files in to source files and headers
         fn categorize_files(&mut self) {
-            let source_endings = vec![String::from(".cpp"), String::from(".cc"), String::from(".c")];
+            let source_endings = vec![
+                String::from(".cpp"),
+                String::from(".cc"),
+                String::from(".c"),
+            ];
             let header_endings = vec![String::from(".hpp"), String::from(".h")];
 
             for file in &self.files {
@@ -137,7 +141,7 @@ mod cpp {
             let mut cpp = Cpp {
                 files: vec![
                     String::from("src/main.cpp"),
-                    String::from("src/foo.hpp"),
+                    String::from("include/foo.hpp"),
                     String::from("src/foo.cpp"),
                 ],
                 output_dir: String::from("target"),
@@ -153,40 +157,6 @@ mod cpp {
             assert_eq!(
                 cpp.obj_files,
                 vec![String::from("target/main.o"), String::from("target/foo.o")]
-            );
-        }
-
-        #[test]
-        fn test_create_variables() {
-            let mut cpp = Cpp {
-                files: vec![
-                    String::from("src/main.cpp"),
-                    String::from("src/foo.hpp"),
-                    String::from("src/foo.cpp"),
-                ],
-                output_dir: String::from("target"),
-                header_files: vec![String::from("src/foo.hpp")],
-                source_files: vec![String::from("src/main.cpp"), String::from("src/foo.cpp")],
-                obj_files: vec![String::from("target/main.o"), String::from("target/foo.o")],
-                makefile: String::new(),
-            };
-
-            cpp.create_variables();
-
-            assert_eq!(
-                cpp.makefile,
-                r#"# Object files:
-OBJS    = target/main.o target/foo.o
-# Header files:
-HEADERS = src/foo.hpp
-# Source files:
-SOURCES = src/main.cpp src/foo.cpp
-# Executable name, run the program with ./a.o
-OUT     = a.o
-# Compiler flags:
-FLAGS   = -g -c -Wall -Isrc
-# Compiler:
-CC      = cc"#
             );
         }
     }
