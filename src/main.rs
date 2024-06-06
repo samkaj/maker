@@ -8,8 +8,9 @@ pub mod walker;
 /// 🪄 Makefile generator
 #[derive(Parser)]
 struct Cli {
-    /// Source code root, usually `src`
-    path: String,
+    /// The paths to search for files. If none are provided, the current directory is used.
+    #[arg(num_args(0..))]
+    paths: Vec<String>,
 
     /// Output directory for build files
     #[arg(short, long, default_value_t = String::from("./target"))]
@@ -17,12 +18,17 @@ struct Cli {
 
     /// Directories to ignore
     #[arg(short, long, num_args(0..))]
-    ignore_dirs: Vec<String>,
+    exclude_dirs: Vec<String>,
 }
 
 fn main() {
-    let cli = Cli::parse();
-    let walker = Walker::new(cli.path, cli.ignore_dirs);
+    let mut cli = Cli::parse();
+    if cli.paths.is_empty() {
+        println!("No paths provided. Using current directory.");
+        cli.paths.push(String::from("."));
+    }
+
+    let walker = Walker::new(cli.paths, cli.exclude_dirs);
     let files = walker.walk();
     for file in files {
         println!("{}", file);

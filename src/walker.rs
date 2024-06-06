@@ -2,20 +2,25 @@ use std::fs;
 
 /// A type used for getting file paths contained in the root file tree.
 pub struct Walker {
-    root: String,
+    paths: Vec<String>,
     ignore_dirs: Vec<String>,
 }
 
 impl Walker {
     /// Create a new Walker.
-    pub fn new(root: String, ignore_dirs: Vec<String>) -> Walker {
-        return Walker { root, ignore_dirs };
+    pub fn new(paths: Vec<String>, ignore_dirs: Vec<String>) -> Walker {
+        return Walker { paths, ignore_dirs };
     }
 
     /// Walk the directory from the `path` field and return all files not within an ignored
     /// directory.
     pub fn walk(&self) -> Vec<String> {
-        self.walk_recursive(self.root.clone())
+        println!("Walking paths: {:?}", self.paths);
+        let mut files: Vec<String> = vec![];
+        for lib in &self.paths {
+            files.extend(self.walk_recursive(lib.clone()));
+        }
+        return files;
     }
 
     /// Depth first search where the root is the path.
