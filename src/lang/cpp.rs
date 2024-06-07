@@ -1,8 +1,8 @@
-mod cpp {
+pub mod cpp {
     use crate::maker::Maker;
 
-    /// A Maker for C/C++ projects
-    pub struct Cpp {
+    /// A `Maker` for C/C++ projects
+    pub struct CppMaker {
         files: Vec<String>,
         output_dir: String,
         header_files: Vec<String>,
@@ -11,9 +11,9 @@ mod cpp {
         makefile: String,
     }
 
-    impl Maker for Cpp {
+    impl Maker for CppMaker {
         fn new(files: Vec<String>, output_dir: String) -> Self {
-            Cpp {
+            CppMaker {
                 files,
                 output_dir,
                 header_files: vec![],
@@ -28,7 +28,7 @@ mod cpp {
             self.create_object_files();
             self.create_variables();
             self.create_all_rule();
-            // Create the obj rules
+            // TODO: Create the obj rules
             self.create_clean_rule();
         }
 
@@ -37,7 +37,7 @@ mod cpp {
         }
     }
 
-    impl Cpp {
+    impl CppMaker {
         /// Split the files in to source files and headers
         fn categorize_files(&mut self) {
             let source_endings = vec![
@@ -78,13 +78,17 @@ mod cpp {
             }
         }
 
+        /// Create default rule. Produce the executable and compiles the source files
         fn create_all_rule(&mut self) {
             self.makefile.push_str(&format!(
                 r#"all: $(OBJS)
-    $(CC) -g $(OBJS) -o $(OUT) $(FLAGS)"#
+    $(CC) -g $(OBJS) -o $(OUT) $(FLAGS)
+
+"#
             ))
         }
 
+        /// Create clean rule. Remove object files and executables
         fn create_clean_rule(&mut self) {
             self.makefile.push_str(&format!(
                 r#"clean:
@@ -92,7 +96,7 @@ mod cpp {
             ))
         }
 
-        /// Construct the Makefile
+        /// Create variables for object names, headers, source files, etc.
         fn create_variables(&mut self) {
             let objs = String::from("OBJS    = ") + &self.obj_files.join(" ");
             let headers = String::from("HEADERS = ") + &self.header_files.join(" ");
@@ -115,7 +119,9 @@ mod cpp {
 # Compiler flags:
 {}
 # Compiler:
-{}"#,
+{}
+
+"#,
                     objs.trim(),
                     headers.trim(),
                     sources.trim(),
@@ -134,7 +140,7 @@ mod cpp {
 
         #[test]
         fn test_categorize_files() {
-            let mut cpp = Cpp {
+            let mut cpp = CppMaker {
                 files: vec![
                     String::from("src/main.cpp"),
                     String::from("src/foo.hpp"),
@@ -158,7 +164,7 @@ mod cpp {
 
         #[test]
         fn test_create_object_files() {
-            let mut cpp = Cpp {
+            let mut cpp = CppMaker {
                 files: vec![
                     String::from("src/main.cpp"),
                     String::from("include/foo.hpp"),
