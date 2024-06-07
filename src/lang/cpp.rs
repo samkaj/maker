@@ -28,7 +28,7 @@ pub mod cpp {
             self.create_object_files();
             self.create_variables();
             self.create_all_rule();
-            // TODO: Create the obj rules
+            self.create_compile_rules();
             self.create_clean_rule();
         }
 
@@ -52,14 +52,14 @@ pub mod cpp {
                     header
                         if header_endings
                             .iter()
-                            .any(|h| file.to_lowercase().ends_with(h)) =>
+                            .any(|dot_h| file.to_lowercase().ends_with(dot_h)) =>
                     {
                         self.header_files.push(header.to_string());
                     }
                     source
                         if source_endings
                             .iter()
-                            .any(|s| file.to_lowercase().ends_with(s)) =>
+                            .any(|dot_cpp| file.to_lowercase().ends_with(dot_cpp)) =>
                     {
                         self.source_files.push(source.to_string());
                     }
@@ -76,24 +76,6 @@ pub mod cpp {
                     self.output_dir.clone() + "/" + file_name.split_once("/").unwrap().1;
                 self.obj_files.push(out_file_name);
             }
-        }
-
-        /// Create default rule. Produce the executable and compiles the source files
-        fn create_all_rule(&mut self) {
-            self.makefile.push_str(&format!(
-                r#"all: $(OBJS)
-    $(CC) -g $(OBJS) -o $(OUT) $(FLAGS)
-
-"#
-            ))
-        }
-
-        /// Create clean rule. Remove object files and executables
-        fn create_clean_rule(&mut self) {
-            self.makefile.push_str(&format!(
-                r#"clean:
-    rm -f $(OBJS) $(OUT)"#
-            ))
         }
 
         /// Create variables for object names, headers, source files, etc.
@@ -131,6 +113,38 @@ pub mod cpp {
                 )
                 .to_string(),
             )
+        }
+
+        /// Create default rule. Produce the executable and compiles the source files
+        fn create_all_rule(&mut self) {
+            self.makefile.push_str(&format!(
+                r#"all: $(OBJS)
+    $(CC) -g $(OBJS) -o $(OUT) $(FLAGS)
+
+"#
+            ))
+        }
+
+        /// Create rules for compiling and linking source files with their headers
+        fn create_compile_rules(&mut self) {
+            for (source_file, obj_file) in self.source_files.iter().zip(self.obj_files.iter()) {
+                self.makefile.push_str(&format!(
+                    r#"{obj_file}: {source_file}
+    $(CC) $(FLAGS) {source_file} -o {obj_file}
+
+"#,
+                    obj_file = obj_file,
+                    source_file = source_file
+                ))
+            }
+        }
+
+        /// Create clean rule. Remove object files and executables
+        fn create_clean_rule(&mut self) {
+            self.makefile.push_str(&format!(
+                r#"clean:
+    rm -f $(OBJS) $(OUT)"#
+            ))
         }
     }
 
