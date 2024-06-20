@@ -6,7 +6,7 @@ pub mod lang;
 pub mod maker;
 pub mod walker;
 
-/// Supported programming languages.
+/// Supported programming languages
 #[derive(ValueEnum, Clone, Debug)]
 enum Language {
     Cpp,
@@ -32,6 +32,7 @@ struct Cli {
     #[arg(short, long, value_enum, default_value_t = Language::Cpp)]
     lang: Language,
 
+    /// Compiler
     #[arg(short, long, default_value_t = String::from("gcc"))]
     compiler: String,
 }
@@ -45,5 +46,5 @@ fn main() {
         Language::Cpp | Language::C => lang::cpp::CppMaker::new(files, cli.output_path, cli.compiler),
     };
     maker.build();
-    println!("{}", maker.dump());
+    maker.dump_to_file("Makefile").unwrap();
 }
