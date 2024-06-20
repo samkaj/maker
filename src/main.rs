@@ -1,6 +1,6 @@
 use clap::{Parser, ValueEnum};
-use maker::Maker;
 use walker::Walker;
+use crate::maker::Maker;
 
 pub mod lang;
 pub mod maker;
@@ -31,6 +31,9 @@ struct Cli {
     /// Programming language
     #[arg(short, long, value_enum, default_value_t = Language::Cpp)]
     lang: Language,
+
+    #[arg(short, long, default_value_t = String::from("gcc"))]
+    compiler: String,
 }
 
 fn main() {
@@ -39,7 +42,7 @@ fn main() {
     let files = walker.walk();
     // Can this be abstracted away?
     let mut maker = match cli.lang {
-        Language::Cpp | Language::C => lang::cpp::cpp::CppMaker::new(files, cli.output_path),
+        Language::Cpp | Language::C => lang::cpp::CppMaker::new(files, cli.output_path, cli.compiler),
     };
     maker.build();
     println!("{}", maker.dump());
