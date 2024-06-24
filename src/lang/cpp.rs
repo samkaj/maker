@@ -18,6 +18,7 @@ impl Maker for CppMaker {
         self.create_variables();
         self.create_all_rule();
         self.create_compile_rules();
+        self.create_obj_dirs();
         self.create_clean_rule();
     }
 
@@ -89,7 +90,7 @@ impl CppMaker {
             + "-I"
             + self.source_files.get(0).unwrap().split_once("/").unwrap().0
             + "\n"; // FIXME: what is this line? We should pass the source path and it should be ok
-        let cc = String::from("CC = ") + &self.compiler; // FIXME: pass the compiler
+        let cc = String::from("CC = ") + &self.compiler;
         self.makefile.push_str(
             &format!(
                 "# Object files:\n{}\n
@@ -112,7 +113,7 @@ impl CppMaker {
     /// Create default rule. Produce the executable and compiles the source files
     fn create_all_rule(&mut self) {
         self.makefile.push_str(&format!(
-            "\nall: $(OBJS)\n\t$(CC) -g $(OBJS) -o $(OUT) $(FLAGS)\n\n"
+            "\nall: mkdirs $(OBJS)\n\t$(CC) -g $(OBJS) -o $(OUT) $(FLAGS)\n\n"
         ))
     }
 
@@ -130,7 +131,21 @@ impl CppMaker {
     /// Create clean rule. Remove object files and executables
     fn create_clean_rule(&mut self) {
         self.makefile
-            .push_str(&format!("clean:\n\trm -f $(OBJS) $(OUT)\n"))
+            .push_str(&format!("clean:\n\trm -f $(OBJS) $(OUT)\n\n"))
+    }
+
+    /// Create rule for making directories for object files based on the source file paths
+    /// e.g., if the source file is `src/foo/bar.cpp`, the rule will create `target/foo`
+    fn create_obj_dirs(&mut self) {
+        self.makefile.push_str("mkdirs:\n");
+        let mut dirs = vec![];
+        for path in self.obj_files.iter() {
+            let dir = path.rsplit_once("/").unwrap().0;
+            if !dirs.contains(&dir) {
+                dirs.push(dir);
+                self.makefile.push_str(&format!("\tmkdir -p {}\n", dir));
+            }
+        }
     }
 }
 
