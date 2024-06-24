@@ -3,7 +3,8 @@ use crate::maker::Maker;
 /// A `Maker` for C/C++ projects
 pub struct CppMaker {
     files: Vec<String>,
-    output_dir: String,
+    output: String,
+    build_path: String,
     header_files: Vec<String>,
     source_files: Vec<String>,
     obj_files: Vec<String>,
@@ -28,10 +29,16 @@ impl Maker for CppMaker {
 }
 
 impl CppMaker {
-    pub fn new(files: Vec<String>, output_dir: String, compiler: String) -> CppMaker {
+    pub fn new(
+        files: Vec<String>,
+        output: String,
+        build_path: String,
+        compiler: String,
+    ) -> CppMaker {
         CppMaker {
             files,
-            output_dir,
+            output,
+            build_path,
             header_files: vec![],
             source_files: vec![],
             obj_files: vec![],
@@ -75,7 +82,7 @@ impl CppMaker {
         for source_file in &self.source_files {
             let file_name = source_file.rsplit_once(".").unwrap().0.to_string() + ".o";
             let out_file_name =
-                self.output_dir.clone() + "/" + file_name.split_once("/").unwrap().1;
+                self.build_path.clone() + "/" + file_name.split_once("/").unwrap().1;
             self.obj_files.push(out_file_name);
         }
     }
@@ -85,9 +92,9 @@ impl CppMaker {
         let objs = String::from("OBJS = ") + &self.obj_files.join(" ") + "\n";
         let headers = String::from("HEADERS = ") + &self.header_files.join(" ") + "\n";
         let sources = String::from("SOURCES = ") + &self.source_files.join(" ") + "\n";
-        let out = String::from("OUT = a.o\n");
-        let flags = String::from("FLAGS = -g -c -Wall ")
-            + "-I"
+        let out = String::from("OUT = ") + &self.output + "\n";
+        let flags = String::from("FLAGS = -g -Wall ")
+            + "-I./"
             + self.source_files.get(0).unwrap().split_once("/").unwrap().0
             + "\n"; // FIXME: what is this line? We should pass the source path and it should be ok
         let cc = String::from("CC = ") + &self.compiler;
@@ -98,6 +105,7 @@ impl CppMaker {
  # Source files:\n{}\n
  # Executable name, run the program with ./a.o\n{}\n
  # Compiler flags:\n{}\n
+ # Add linker flags:\nLFLAGS =\n
  # Compiler:\n{}\n",
                 objs.trim(),
                 headers.trim(),
@@ -113,7 +121,7 @@ impl CppMaker {
     /// Create default rule. Produce the executable and compiles the source files
     fn create_all_rule(&mut self) {
         self.makefile.push_str(&format!(
-            "\nall: mkdirs $(OBJS)\n\t$(CC) -g $(OBJS) -o $(OUT) $(FLAGS)\n\n"
+            "\nall: mkdirs $(OBJS)\n\t$(CC) -g $(OBJS) -o $(OUT) $(LFLAGS)\n\n"
         ))
     }
 
@@ -161,7 +169,8 @@ mod tests {
                 String::from("src/foo.hpp"),
                 String::from("src/foo.cpp"),
             ],
-            output_dir: String::from("target"),
+            output: "a.o".to_string(),
+            build_path: String::from("target"),
             header_files: vec![],
             source_files: vec![],
             obj_files: vec![],
@@ -188,7 +197,8 @@ mod tests {
                 String::from("src/bar/baz.cpp"),
                 String::from("include/bar/baz.h"),
             ],
-            output_dir: String::from("target"),
+            output: "a.o".to_string(),
+            build_path: String::from("target"),
             header_files: vec![],
             source_files: vec![],
             obj_files: vec![],

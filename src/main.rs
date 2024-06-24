@@ -20,9 +20,13 @@ struct Cli {
     #[arg(num_args(1..), required(true))]
     paths: Vec<String>,
 
+    /// Executable
+    #[arg(short, long, default_value_t = String::from("a.out"))]
+    output: String,
+
     /// Output directory for build files
     #[arg(short, long, default_value_t = String::from("target"))]
-    output_path: String,
+    build_path: String,
 
     /// Directories to ignore
     #[arg(short, long, num_args(0..))]
@@ -33,7 +37,7 @@ struct Cli {
     lang: Language,
 
     /// Compiler
-    #[arg(short, long, default_value_t = String::from("gcc"))]
+    #[arg(short, long, default_value_t = String::from("clang++"))]
     compiler: String,
 }
 
@@ -43,7 +47,7 @@ fn main() {
     let files = walker.walk();
     // Can this be abstracted away?
     let mut maker = match cli.lang {
-        Language::Cpp | Language::C => lang::cpp::CppMaker::new(files, cli.output_path, cli.compiler),
+        Language::Cpp | Language::C => lang::cpp::CppMaker::new(files, cli.output, cli.build_path, cli.compiler),
     };
     maker.build();
     maker.dump_to_file("Makefile").unwrap();
