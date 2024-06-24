@@ -11,7 +11,7 @@ Supply your project path to the CLI, and it creates a Makefile for you. The goal
 ```sh
 cargo run -- src inc
 make
-./a.o
+./a.out
 ```
 
 ## Features
